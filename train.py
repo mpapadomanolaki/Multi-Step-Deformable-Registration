@@ -43,7 +43,7 @@ mov_test_loader = torch.utils.data.DataLoader(dataset2, shuffle=True, batch_size
 ref_train_loader = torch.utils.data.DataLoader(dataset1, shuffle=True, batch_size=args.batch_size)
 ref_test_loader = torch.utils.data.DataLoader(dataset2, shuffle=True, batch_size=args.batch_size)
 
-model = U.to_cuda(N.DisplNet(args.img_channels,args.net_step))
+model = U.to_cuda(N.DisplNet(args.img_channels,args.net_step, args.c))
 criterion = U.to_cuda(torch.nn.MSELoss())
 
 optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
@@ -64,7 +64,7 @@ for epoch in range(1, epochs + 1):
             ref_data[0] = U.to_cuda(ref_data[0])
             optimizer.zero_grad()
 
-            deformable, deformed, deformed_images = model(mov_data[0], ref_data[0])
+            deformable, sgrid, deformed_images = model(mov_data[0], ref_data[0])
 
             mse_loss = 0.0
             for s in range(0, args.net_step):
@@ -93,7 +93,7 @@ for epoch in range(1, epochs + 1):
                 mov_data[0] = U.to_cuda(mov_data[0])
                 ref_data[0] = U.to_cuda(ref_data[0])
 
-                deformable, deformed, deformed_images = model(mov_data[0], ref_data[0])
+                deformable, sgrid, deformed_images = model(mov_data[0], ref_data[0])
 
                 mse_loss = 0.0
                 for s in range(0, args.net_step):
