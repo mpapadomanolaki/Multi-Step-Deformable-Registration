@@ -1,4 +1,4 @@
-import nets as N
+import multinet as N
 import utils as U
 from torch.utils.data import DataLoader
 import torch
@@ -8,111 +8,102 @@ from torch.optim.lr_scheduler import StepLR
 import matplotlib.pylab as plt
 import shutil
 import os
-import urllib
-import shutil
+import argparse
 
-opener = urllib.request.build_opener()
-opener.addheaders = [('User-agent', 'Mozilla/5.0')]
-urllib.request.install_opener(opener)
+parser = argparse.ArgumentParser()
+parser.add_argument('--batch_size', type=int, default=256,
+                    help='batchsize')
+parser.add_argument('--b', type=int, default=1e-7,
+                    help='value of the regularizer applied on the spatial gradients')
+parser.add_argument('--c', type=int, default=4,
+                    help='maximum displacement along consecutive pixels')
+parser.add_argument('--img_channels', type=int, default=2,
+                    help='channels of images')
+parser.add_argument('--net_step', type=int, default=3,
+                    help='number of steps for the multi-step network')
+parser.add_argument('--save_folder', type=str, default='./models',
+                    help='where to save the trained models')
+parser.add_argument('--epochs', type=int, default=10,
+                    help='number of training epochs')
+
+args = parser.parse_args()
+
+transform=transforms.Compose([
+    transforms.ToTensor()
+    ])
+
+dataset1 = datasets.MNIST('./data', train=True, download=True,
+                   transform=transform)
+dataset2 = datasets.MNIST('./data', train=False,
+                   transform=transform)
+
+mov_train_loader = torch.utils.data.DataLoader(dataset1, shuffle=True, batch_size=args.batch_size)
+mov_test_loader = torch.utils.data.DataLoader(dataset2, shuffle=True, batch_size=args.batch_size)
+
+ref_train_loader = torch.utils.data.DataLoader(dataset1, shuffle=True, batch_size=args.batch_size)
+ref_test_loader = torch.utils.data.DataLoader(dataset2, shuffle=True, batch_size=args.batch_size)
+
+model = U.to_cuda(N.DisplNet(args.img_channels,args.net_step))
+criterion = U.to_cuda(torch.nn.MSELoss())
+
+optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
+epochs = 10
+
+if os.path.exists(args.save_folder):
+    shutil.rmtree(args.save_folder)
+os.mkdir(args.save_folder)
 
 
-if __name__ == '__main__':
-
-    def train(epochs, model, mov_train_loader, ref_train_loader, optimizer, epoch, criterion, net_step):
+for epoch in range(1, epochs + 1):
         model.train()
-        #set regularizers for affine and deformable registration
-        a, b = 1e-4, 1e-7
-        log_interval = 10
         total_loss = 0
+        iter_ = 0
         for batch_idx, (data, target) in enumerate(zip(mov_train_loader, ref_train_loader)):
-
             mov_data, ref_data = data, target
-            mov_data[0] = U.to_cuda(torch.stack((mov_data[0],mov_data[0],mov_data[0]), 1).squeeze(2))
-            ref_data[0] = U.to_cuda(torch.stack((ref_data[0],ref_data[0],ref_data[0]), 1).squeeze(2))
+            mov_data[0] = U.to_cuda(mov_data[0])
+            ref_data[0] = U.to_cuda(ref_data[0])
             optimizer.zero_grad()
 
             deformable, deformed, deformed_images = model(mov_data[0], ref_data[0])
 
             mse_loss = 0.0
-            for s in range(0, net_step):
+            for s in range(0, args.net_step):
                mse_loss = mse_loss+criterion(deformed_images[s], ref_data[0])
-            mse_loss = mse_loss/float(net_step)
-            def_loss = b*torch.sum(torch.abs(deformable))
+            mse_loss = mse_loss/float(args.net_step)
+            def_loss = args.b*torch.sum(torch.abs(deformable))
             loss = mse_loss + def_loss
 
             total_loss += loss.item()
             loss.backward()
-
             optimizer.step()
-            if batch_idx % log_interval == 0:
-                print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                    epoch, batch_idx * len(mov_data), len(mov_train_loader.dataset),
-                    100. * batch_idx / len(mov_train_loader), loss.item()))
-        print('Mean loss: ', total_loss/float(batch_idx)) #float(len(mov_train_loader.dataset)))
+
+            if iter_ % 100 == 0:
+                print('Train (Epoch {}) [{}/{}]\tLoss: {:.4f}'.format(
+                      epoch, batch_idx, int(len(mov_train_loader.dataset)/args.batch_size), loss.item()))
+            iter_ += 1
+
+        print('\nTrain set: Average loss: {:.4f}'.format(total_loss/float(batch_idx)))
 
 
-    def test(model, mov_test_loader, ref_test_loader, criterion, net_step):
         model.eval()
-        a, b = 1e-4, 1e-7
         test_loss = 0
-        correct = 0
         with torch.no_grad():
             for batch_idx, (data, target) in enumerate(zip(mov_test_loader, ref_test_loader)):
                 mov_data, ref_data = data, target
-                mov_data[0] = U.to_cuda(torch.stack((mov_data[0],mov_data[0],mov_data[0]), 1).squeeze(2))
-                ref_data[0] = U.to_cuda(torch.stack((ref_data[0],ref_data[0],ref_data[0]), 1).squeeze(2))
+                mov_data[0] = U.to_cuda(mov_data[0])
+                ref_data[0] = U.to_cuda(ref_data[0])
 
-                deformable, deformed, deformed_images = model(moving, reference)
+                deformable, deformed, deformed_images = model(mov_data[0], ref_data[0])
 
                 mse_loss = 0.0
-                for s in range(0, net_step):
+                for s in range(0, args.net_step):
                    mse_loss = mse_loss+criterion(deformed_images[s], ref_data[0])
-                mse_loss = mse_loss/float(net_step)
-                def_loss = b*torch.sum(torch.abs(deformable))
+                mse_loss = mse_loss/float(args.net_step)
+                def_loss = args.b*torch.sum(torch.abs(deformable))
 
                 test_loss += mse_loss + def_loss
+        print('Test set: Average loss: {:.4f}\n'.format(
+            test_loss/float(batch_idx)))
 
-        test_loss = test_loss/float(batch_idx) #len(mov_test_loader.dataset)
+        torch.save(model.state_dict(), "{}/model_{}.pt".format(args.save_folder,epoch))
 
-        print('\nTest set: Average loss: {:.4f}\n'.format(
-            test_loss))
-    if os.path.exists('data'):
-        print('data exist')
-    else:
-        os.mkdir('data')
-
-
-    transform=transforms.Compose([
-        transforms.ToTensor()
-        ])
-
-    dataset1 = datasets.MNIST('./data', train=True, download=True,
-                       transform=transform)
-    dataset2 = datasets.MNIST('./data', train=False,
-                       transform=transform)
-
-    mov_train_loader = torch.utils.data.DataLoader(dataset1, shuffle=True, batch_size=256)
-    mov_test_loader = torch.utils.data.DataLoader(dataset2, shuffle=True, batch_size=256)
-
-    ref_train_loader = torch.utils.data.DataLoader(dataset1, shuffle=True, batch_size=256)
-    ref_test_loader = torch.utils.data.DataLoader(dataset2, shuffle=True, batch_size=256)
-
-    model = U.to_cuda(N.DisplNet(6))
-    model = U.initialize_model(model)
-
-    criterion = U.to_cuda(torch.nn.MSELoss())
-
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
-    epochs = 10
-
-    if os.path.exists('./models'):
-        shutil.rmtree('./models')
-    os.mkdir('./models')
-
-    net_step = 3
-
-    for epoch in range(1, epochs + 1):
-        train(epochs, model, mov_train_loader, ref_train_loader, optimizer, epoch, criterion, net_step)
-        test(model, mov_test_loader, ref_test_loader, criterion, net_step)
-
-        torch.save(model.state_dict(), "./models/model_{}.pt".format(epoch))
