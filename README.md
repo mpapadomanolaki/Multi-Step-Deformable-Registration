@@ -15,9 +15,9 @@ Run 'show.py' to make registration predictions on the test set.
 # Outputs:
 Examples of the output of the show.py script (result after few training epochs):
 
-![example1](/outputs/__1to5.png) 
+![example1](/output/__1to5.png) 
 
 
-![example1](/outputs/__4to7.png)
+![example1](/output/__4to7.png)
 
-![example1](/outputs/__1to0.png)
+![example1](/output/__1to0.png)
