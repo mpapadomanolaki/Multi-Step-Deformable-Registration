@@ -55,7 +55,7 @@ def resample2D(im, sampling_grid, height, width, samples, channels):
     idx_c = base_y0 + x1
     idx_d = base_y1 + x1
 
-    im_flat = torch.reshape(im.permute(0,2,3,1), (-1,3))
+    im_flat = torch.reshape(im.permute(0,2,3,1), (-1,1))
     Ia = torch.index_select(im_flat,0,idx_a.long())
     Ib = torch.index_select(im_flat,0,idx_b.long())
     Ic = torch.index_select(im_flat,0,idx_c.long())
