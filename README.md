@@ -3,6 +3,8 @@
 This is a PyTorch implementation of the following paper:
 'Unsupervised Multi-Step Deformable Registration ofRemote Sensing Imagery based on Deep Learning'
 
+In this repository we have applied the multi-step registration network on the MNIST dataset. For that reason we employ a more simple architecture than the one used in the paper. The multi-step process however remains the same.
+
 # To use this code:
 Run 'python train.py' to train the model.  <br/> <br/>
 Run 'show.py' to make registration predictions on the test set.
