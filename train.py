@@ -1,4 +1,4 @@
-import multinet as N
+import net as N
 import utils as U
 from torch.utils.data import DataLoader
 import torch
