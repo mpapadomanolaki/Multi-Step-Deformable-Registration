@@ -55,7 +55,7 @@ def resample2D(im, sampling_grid, height, width, samples, channels):
     idx_c = base_y0 + x1
     idx_d = base_y1 + x1
 
-    im_flat = torch.reshape(im.permute(0,2,3,1), (-1,1))
+    im_flat = torch.reshape(im.permute(0,2,3,1), (-1,channels))
     Ia = torch.index_select(im_flat,0,idx_a.long())
     Ib = torch.index_select(im_flat,0,idx_b.long())
     Ic = torch.index_select(im_flat,0,idx_c.long())
@@ -81,19 +81,17 @@ def resample2D(im, sampling_grid, height, width, samples, channels):
     return output
 
 
-def smoothTransformer2D(inp):
+def smoothTransformer2D(inp, c):
 
     if len(inp) == 2:
         [im, defgrad] = inp
-        defgrad = logisticGrowth(defgrad, 2.0)
+        defgrad = logisticGrowth(defgrad, c)
         sampling_grid = integralImage(defgrad)
     else:
         [im, defgrad, previous_sgrid] = inp
-        defgrad = logisticGrowth(defgrad, 2.0)
+        defgrad = logisticGrowth(defgrad, c)
         sampling_grid = previous_sgrid + defgrad
 
-
-    base_grid = U.to_cuda(integralImage(torch.ones(defgrad.shape[0], defgrad.shape[1], defgrad.shape[2], defgrad.shape[3]))*0.5)
 
     samples = im.shape[0]
     channels = im.shape[1]
@@ -103,4 +101,3 @@ def smoothTransformer2D(inp):
     mov_def = resample2D(im, sampling_grid, height, width, samples, channels)
 
     return mov_def, sampling_grid
-
