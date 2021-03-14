@@ -5,7 +5,7 @@ This is a PyTorch implementation of the following paper:
 
 Please cite the this publication if you use this code.
 
-In this repository we have applied the multi-step registration network on the MNIST dataset. For that reason we employ a more simple architecture than the one used in the paper. The multi-step process however remains the same.
+In this repository we have applied the multi-step registration network on the MNIST dataset. Since the MNIST images are of lower dimensions we employ a more simple architecture than the one used in the paper. The multi-step process however remains the same.
 
 # To use this code:
 Run 'python train.py' to train the model.  <br/> <br/>
