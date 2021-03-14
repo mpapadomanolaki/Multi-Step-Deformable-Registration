@@ -100,7 +100,7 @@ def smoothTransformer2D(inp):
     height = im.shape[2]
     width = im.shape[3]
 
-    mov_def = resample2D(im, sampling_grid_norm, height, width, samples, channels)
+    mov_def = resample2D(im, sampling_grid, height, width, samples, channels)
 
     return mov_def, sampling_grid
 
