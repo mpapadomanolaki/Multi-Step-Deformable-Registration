@@ -31,10 +31,12 @@ class up_conv_block(nn.Module):
 
 
 class DisplNet(nn.Module):
-    def __init__(self,ch_in=6,step=3):
+    def __init__(self,ch_in=2,step=3, c=4):
         super(DisplNet,self).__init__()
 
         self.step = step
+        self.c = c
+        self.ch_in = ch_in
 
         self.maxpool = nn.MaxPool2d(2,2)
         self.upsample = nn.Upsample(scale_factor=2)
@@ -42,10 +44,10 @@ class DisplNet(nn.Module):
         self.conv1 = conv_block(ch_in, 16)
         self.conv2 = conv_block(16, 32)
         self.conv3 = conv_block(32, 64)
-        self.conv4 = conv_block(64, 128)
+#        self.conv4 = conv_block(64, 128)
 
-        self.up_conv4 = up_conv_block(128, 128)
-        self.up_conv3 = up_conv_block(192, 64)
+#        self.up_conv4 = up_conv_block(128, 128)
+        self.up_conv3 = up_conv_block(64, 64)
         self.up_conv2 = up_conv_block(96, 32)
         self.up_conv1 = up_conv_block(48, 16)
 
@@ -60,19 +62,12 @@ class DisplNet(nn.Module):
         e2 = self.maxpool(e2)
 
         e3 = self.conv3(e2)
-        e3 = self.maxpool(e3)
 
-        e4 = self.conv4(e3)
-
-        return e1,e2,e3,e4
+        return e1,e2,e3
 
 
-    def decoder(self,e1,e2,e3,e4):
-        d4 = self.up_conv4(e4)
-        d4 = torch.cat((d4,e3),dim=1)
-
-        d3 = self.upsample(d4)
-        d3 = self.up_conv3(d3)
+    def decoder(self,e1,e2,e3):
+        d3 = self.up_conv3(e3)
         d3 = torch.cat((d3,e2),dim=1)
 
         d2 = self.upsample(d3)
@@ -98,22 +93,22 @@ class DisplNet(nn.Module):
 
         for s in range(0,self.step):
             if s==0:
-                e1,e2,e3,e4 = self.encoder(input)
-                d = self.decoder(e1,e2,e3,e4)
+                e1,e2,e3 = self.encoder(input)
+                d = self.decoder(e1,e2,e3)
                 deformable = self.deform(d)
-                out_info = smoothTransformer2D([moving, deformable])
+                out_info = smoothTransformer2D([moving, deformable], self.c)
                 deformed, sgrid = out_info
                 deformed_images.append(deformed)
             else:
                 new_input = torch.cat((previous_deformed,reference), 1)
-                e1,e2,e3,e4 = self.encoder(new_input)
-                d = self.decoder(e1,e2,e3,e4)
+                e1,e2,e3 = self.encoder(new_input)
+                d = self.decoder(e1,e2,e3)
                 deformable = deformable + self.deform(d)
-                out_info = smoothTransformer2D([moving, deformable, previous_sgrid])
+                out_info = smoothTransformer2D([moving, deformable, previous_sgrid], self.c)
                 deformed, sgrid = out_info
                 deformed_images.append(deformed)
 
             previous_deformed = deformed
             previous_sgrid = sgrid
 
-        return deformable, previous_deformed, deformed_images
+        return deformable, sgrid, deformed_images
