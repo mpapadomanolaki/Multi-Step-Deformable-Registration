@@ -50,7 +50,7 @@ mov_inp = U.to_cuda(mov_inputs[0]).unsqueeze(0) #torch.stack( (mov_inputs[0].uns
 ref_inputs, ref_classes = next(iter(ref_test_loader))  
 ref_inp = U.to_cuda(ref_inputs[0]).unsqueeze(0) #torch.stack( (ref_inputs[0].unsqueeze(0),ref_inputs[0].unsqueeze(0),ref_inputs[0].unsqueeze(0)), 1).squeeze(2)
 
-print('Convert from digit ', mov_classes[0], 'to digit ', ref_classes[0])
+print('Convert from digit ', mov_classes[0].data.numpy(), 'to digit ', ref_classes[0].data.numpy())
 deformable, sgrid, deformed_images = model(mov_inp, ref_inp)
 
 mov_inp = mov_inp.permute(0,2,3,1)
