@@ -12,6 +12,8 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size', type=int, default=1,
                     help='batchsize')
+parser.add_argument('--model_id', type=str, default='10',
+                    help='specific model that you want to load')
 parser.add_argument('--c', type=int, default=4,
                     help='maximum displacement along consecutive pixels')
 parser.add_argument('--img_channels', type=int, default=2,
@@ -25,7 +27,7 @@ args = parser.parse_args()
 
 
 model = U.to_cuda(N.DisplNet(args.img_channels,args.net_step))
-model.load_state_dict(torch.load('./models/model_10.pt'))
+model.load_state_dict(torch.load('./models/model_{}.pt'.format(args.model_id)))
 
 transform=transforms.Compose([
         transforms.ToTensor()
