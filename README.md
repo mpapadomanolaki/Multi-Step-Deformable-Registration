@@ -1,7 +1,7 @@
 # Multi-Step-Deformable-Registration
 
 This is a PyTorch implementation of the following paper:
-'Unsupervised Multi-Step Deformable Registration ofRemote Sensing Imagery based on Deep Learning', Remote Sensing
+'Unsupervised Multi-Step Deformable Registration of Remote Sensing Imagery based on Deep Learning', Remote Sensing
 
 Please cite the this publication if you use this code.
 
