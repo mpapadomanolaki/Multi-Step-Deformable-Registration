@@ -44,7 +44,7 @@ mov_test_loader = torch.utils.data.DataLoader(dataset2, shuffle=True, batch_size
 ref_train_loader = torch.utils.data.DataLoader(dataset1, shuffle=True, batch_size=args.batch_size)
 ref_test_loader = torch.utils.data.DataLoader(dataset2, shuffle=True, batch_size=args.batch_size)
 
-
+##Create a random image pair for registration
 mov_inputs, mov_classes = next(iter(mov_test_loader))  
 mov_inp = U.to_cuda(mov_inputs[0]).unsqueeze(0) #torch.stack( (mov_inputs[0].unsqueeze(0),mov_inputs[0].unsqueeze(0),mov_inputs[0].unsqueeze(0)), 1).squeeze(2)
 ref_inputs, ref_classes = next(iter(ref_test_loader))  
