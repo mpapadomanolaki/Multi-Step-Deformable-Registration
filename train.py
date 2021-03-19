@@ -13,6 +13,8 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size', type=int, default=256,
                     help='batchsize')
+parser.add_argument('--lr', type=int, default=1e-4,
+                    help='learning_rate')
 parser.add_argument('--b', type=int, default=1e-7,
                     help='value of the regularizer applied on the spatial gradients')
 parser.add_argument('--c', type=int, default=4,
@@ -50,7 +52,7 @@ ref_test_loader = torch.utils.data.DataLoader(dataset2, shuffle=True, batch_size
 model = U.to_cuda(N.DisplNet(args.img_channels,args.net_step, args.c))
 criterion = U.to_cuda(torch.nn.MSELoss())
 
-optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
+optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 epochs = 10
 
 if os.path.exists(args.save_folder):
