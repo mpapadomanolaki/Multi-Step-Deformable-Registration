@@ -84,7 +84,7 @@ class DisplNet(nn.Module):
         deformable_1 = self.deformable_layer(out_d)
         return deformable_1
 
-
+######MULTI-STEP NETWORK######################
     def forward(self, moving, reference):
 
         deformed_images = []
@@ -112,3 +112,4 @@ class DisplNet(nn.Module):
             previous_sgrid = sgrid
 
         return deformable, sgrid, deformed_images
+    ##################################################
