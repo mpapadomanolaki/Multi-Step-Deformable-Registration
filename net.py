@@ -104,7 +104,7 @@ class DisplNet(nn.Module):
                 e1,e2,e3 = self.encoder(new_input)
                 d = self.decoder(e1,e2,e3)
                 deformable = deformable + self.deform(d)
-                out_info = smoothTransformer2D([moving, deformable, previous_sgrid], self.c)
+                out_info = smoothTransformer2D([moving, deformable], self.c)
                 deformed, sgrid = out_info
                 deformed_images.append(deformed)
 
