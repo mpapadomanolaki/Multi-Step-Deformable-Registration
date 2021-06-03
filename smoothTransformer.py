@@ -83,15 +83,9 @@ def resample2D(im, sampling_grid, height, width, samples, channels):
 
 def smoothTransformer2D(inp, c):
 
-    if len(inp) == 2:
-        [im, defgrad] = inp
-        defgrad = logisticGrowth(defgrad, c)
-        sampling_grid = integralImage(defgrad)
-    else:
-        [im, defgrad, previous_sgrid] = inp
-        defgrad = logisticGrowth(defgrad, c)
-        sampling_grid = previous_sgrid + defgrad
-
+    [im, defgrad] = inp
+    defgrad = logisticGrowth(defgrad, c)
+    sampling_grid = integralImage(defgrad)
 
     samples = im.shape[0]
     channels = im.shape[1]
